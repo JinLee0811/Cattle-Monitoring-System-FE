@@ -4,7 +4,8 @@ import Sidebar from "./components/Sidebar";
 import AlarmIcon from "./components/AlarmIcon";
 import Dashboard from "./pages/Dashboard";
 import Monitor from "./pages/Monitor";
-import Analyze from "./pages/Analyze";
+import Logs from "./pages/Logs";
+import Upload from "./pages/Upload";
 import Login from "./pages/Login";
 
 const ProtectedRoute = ({ children }) => {
@@ -66,11 +67,21 @@ function App() {
             }
           />
           <Route
-            path='/analyze'
+            path='/logs'
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Analyze />
+                  <Logs />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/upload'
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Upload />
                 </Layout>
               </ProtectedRoute>
             }

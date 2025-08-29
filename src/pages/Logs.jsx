@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { mockLogs } from "../utils/mockData";
 
-const LogPanel = () => {
+const Logs = () => {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -55,8 +55,24 @@ const LogPanel = () => {
   });
 
   return (
-    <div className='bg-slate-800 rounded-lg p-6 h-full'>
-                  <div className='flex items-center justify-between mb-6'>
+    <div className='min-h-screen bg-slate-900'>
+      {/* Header */}
+      <header className='bg-slate-800 border-b border-slate-700 px-6 py-4 ml-64'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h1 className='text-2xl font-bold text-white'>System Logs</h1>
+            <p className='text-gray-400 text-sm'>
+              Monitor and analyze system activities, errors, and performance metrics
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div className='flex'>
+        {/* Main content */}
+        <main className='flex-1 ml-64 p-6'>
+          <div className='bg-slate-800 rounded-lg p-6 h-full'>
+            <div className='flex items-center justify-between mb-6'>
               <h2 className='text-xl font-bold text-white'>System Logs</h2>
               <div className='flex items-center space-x-2'>
                 <span className='text-sm text-gray-400'>Real-time</span>
@@ -96,73 +112,76 @@ const LogPanel = () => {
 
             {/* Filter and search */}
             <div className='flex flex-col sm:flex-row gap-4 mb-6'>
-        <div className='flex-1'>
-          <input
-            type='text'
-            placeholder='Search logs...'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className='w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-farm-green'
-          />
-        </div>
-        <div className='flex space-x-2'>
-          {["all", "error", "warning", "success", "info"].map((severity) => (
-            <button
-              key={severity}
-              onClick={() => setFilter(severity)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === severity
-                  ? "bg-farm-green text-white"
-                  : "bg-slate-700 text-gray-300 hover:bg-slate-600"
-              }`}>
-              {severity === "all"
-                ? "All"
-                : severity === "error"
-                  ? "Error"
-                  : severity === "warning"
-                    ? "Warning"
-                    : severity === "success"
-                      ? "Success"
-                      : "Info"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Log list */}
-      <div className='space-y-3 max-h-96 overflow-y-auto'>
-        {filteredLogs.map((log) => (
-          <div
-            key={log.id}
-            className={`p-4 rounded-lg border ${severityColors[log.severity]} transition-colors hover:bg-opacity-20`}>
-            <div className='flex items-start justify-between'>
-              <div className='flex items-start space-x-3 flex-1'>
-                <div className='mt-1'>{typeIcons[log.type]}</div>
-                <div className='flex-1'>
-                  <div className='flex items-center space-x-2 mb-1'>
-                    <span className='text-sm font-medium'>{log.camera}</span>
-                    <span className='text-xs opacity-75'>•</span>
-                    <span className='text-xs opacity-75'>{log.location}</span>
-                  </div>
-                  <p className='text-sm leading-relaxed'>{log.message}</p>
-                </div>
+              <div className='flex-1'>
+                <input
+                  type='text'
+                  placeholder='Search logs...'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className='w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-farm-green'
+                />
               </div>
-              <div className='text-right'>
-                <div className='text-xs opacity-75 mb-1'>
-                  {new Date(log.timestamp).toLocaleTimeString()}
-                </div>
-                <div className='text-xs opacity-75'>
-                  {new Date(log.timestamp).toLocaleDateString()}
-                </div>
+              <div className='flex space-x-2'>
+                {["all", "error", "warning", "success", "info"].map((severity) => (
+                  <button
+                    key={severity}
+                    onClick={() => setFilter(severity)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      filter === severity
+                        ? "bg-farm-green text-white"
+                        : "bg-slate-700 text-gray-300 hover:bg-slate-600"
+                    }`}>
+                    {severity === "all"
+                      ? "All"
+                      : severity === "error"
+                        ? "Error"
+                        : severity === "warning"
+                          ? "Warning"
+                          : severity === "success"
+                            ? "Success"
+                            : "Info"}
+                  </button>
+                ))}
               </div>
             </div>
+
+            {/* Log list */}
+            <div className='space-y-3 max-h-96 overflow-y-auto'>
+              {filteredLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className={`p-4 rounded-lg border ${severityColors[log.severity]} transition-all hover:scale-[1.02]`}>
+                  <div className='flex items-start justify-between'>
+                    <div className='flex items-start space-x-3 flex-1'>
+                      <div className='mt-1'>{typeIcons[log.type]}</div>
+                      <div className='flex-1'>
+                        <div className='flex items-center space-x-2 mb-1'>
+                          <span className='text-sm font-medium'>{log.camera}</span>
+                          <span className='text-xs opacity-75'>•</span>
+                          <span className='text-xs opacity-75'>{log.location}</span>
+                        </div>
+                        <p className='text-sm leading-relaxed'>{log.message}</p>
+                      </div>
+                    </div>
+                    <div className='text-right'>
+                      <div className='text-xs opacity-75 mb-1'>
+                        {new Date(log.timestamp).toLocaleTimeString()}
+                      </div>
+                      <div className='text-xs opacity-75'>
+                        {new Date(log.timestamp).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+
           </div>
-        ))}
+        </main>
       </div>
-
-
     </div>
   );
 };
 
-export default LogPanel;
+export default Logs;
