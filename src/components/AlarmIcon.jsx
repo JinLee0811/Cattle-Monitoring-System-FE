@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { mockAlarms } from "../utils/mockData";
 
 const AlarmIcon = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Calculate unread alarm count
@@ -29,13 +31,10 @@ const AlarmIcon = () => {
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         className='relative p-2 text-gray-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors'>
-        <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            strokeWidth={2}
-            d='M15 17h5l-5 5v-5zM10.5 3.75a6 6 0 00-6 6v3.75a6 6 0 01-6 6h12a6 6 0 01-6-6V9.75a6 6 0 00-6-6z'
-          />
+        <svg className='w-8 h-8' fill='currentColor' viewBox='0 0 128 128'>
+          <path d="M95.89 88.25h-2.64V69.12a28.706 28.706 0 0 0-19.54-27.142V40a9.085 9.085 0 0 0-18.17 0v1.978A28.706 28.706 0 0 0 36 69.12v19.13h-2.64A8.751 8.751 0 0 0 24.61 97a8.76 8.76 0 0 0 8.75 8.75H52.3a12.445 12.445 0 0 0 24.65 0h18.94a8.75 8.75 0 0 0 0-17.5zm-31.271 24.718a8.974 8.974 0 0 1-8.785-7.218h17.582a8.979 8.979 0 0 1-8.797 7.218zM99.6 100.712a5.217 5.217 0 0 1-3.713 1.538H33.36a5.25 5.25 0 0 1-3.707-8.968 5.178 5.178 0 0 1 3.707-1.532h4.39A1.751 1.751 0 0 0 39.5 90V69.12a25.182 25.182 0 0 1 18.265-24.165 1.751 1.751 0 0 0 1.275-1.685V40a5.585 5.585 0 0 1 11.17 0v3.27a1.751 1.751 0 0 0 1.275 1.685A25.182 25.182 0 0 1 89.75 69.12V90a1.751 1.751 0 0 0 1.75 1.75h4.39a5.25 5.25 0 0 1 3.713 8.962zM86.2 31.636a1.75 1.75 0 0 0-1.122 3.316 25.408 25.408 0 0 1 17.272 24.086 1.75 1.75 0 0 0 3.5 0A28.907 28.907 0 0 0 86.2 31.636z"/>
+          <path d="M90.443 21.627a1.75 1.75 0 0 0-1.122 3.315 34.61 34.61 0 0 1 23.522 32.807 1.75 1.75 0 1 0 3.5 0 38.106 38.106 0 0 0-25.9-36.122zM26.9 59.038a25.408 25.408 0 0 1 17.269-24.086 1.75 1.75 0 1 0-1.122-3.316A28.907 28.907 0 0 0 23.4 59.038a1.75 1.75 0 0 0 3.5 0z"/>
+          <path d="M39.929 24.942a1.75 1.75 0 0 0-1.122-3.315 38.106 38.106 0 0 0-25.9 36.122 1.75 1.75 0 0 0 3.5 0 34.61 34.61 0 0 1 23.522-32.807z"/>
         </svg>
 
         {/* Alarm count badge */}
@@ -92,8 +91,7 @@ const AlarmIcon = () => {
                             {severityLabels[alarm.severity]}
                           </span>
                         </div>
-                        <p className='text-sm text-gray-300 mb-1'>{alarm.camera}</p>
-                        <p className='text-xs text-gray-400'>{alarm.location}</p>
+                        <p className='text-xs text-gray-400'>{alarm.camera} • {alarm.location}</p>
                       </div>
                       <div className='text-right'>
                         <div className='text-xs text-gray-400 mb-1'>
@@ -138,7 +136,12 @@ const AlarmIcon = () => {
           </div>
 
           <div className='p-4 border-t border-slate-700'>
-            <button className='w-full text-center text-sm text-farm-green hover:text-green-400 transition-colors'>
+            <button 
+              onClick={() => {
+                setShowDropdown(false);
+                navigate('/logs');
+              }}
+              className='w-full text-center text-sm text-farm-green hover:text-green-400 transition-colors'>
               View All Alarms
             </button>
           </div>
