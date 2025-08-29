@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 
-const VideoPlayer = ({ videoUrl, cameraName, location, isLive = false }) => {
+const VideoPlayer = ({ videoUrl, cameraName, location, isLive = false, showControls = true }) => {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
-  const [showControls, setShowControls] = useState(true);
+  const [controlsVisible, setControlsVisible] = useState(true);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -28,13 +28,21 @@ const VideoPlayer = ({ videoUrl, cameraName, location, isLive = false }) => {
     video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
 
+    // Auto-play and loop for surveillance monitoring
+    if (!showControls) {
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true; // Mute for auto-play
+      video.play().catch(e => console.log('Auto-play failed:', e));
+    }
+
     return () => {
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);
     };
-  }, []);
+  }, [showControls]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -73,39 +81,22 @@ const VideoPlayer = ({ videoUrl, cameraName, location, isLive = false }) => {
 
   return (
     <div className='relative bg-black rounded-lg overflow-hidden group'>
-      {/* Camera info header */}
-      <div className='absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-4'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <h3 className='text-white font-semibold text-sm'>{cameraName}</h3>
-            <p className='text-gray-300 text-xs'>{location}</p>
-          </div>
-          <div className='flex items-center space-x-2'>
-            {isLive && (
-              <div className='flex items-center space-x-1'>
-                <div className='w-2 h-2 bg-red-500 rounded-full animate-pulse'></div>
-                <span className='text-red-500 text-xs font-medium'>LIVE</span>
-              </div>
-            )}
-            <div className='text-white text-xs'>
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Video element */}
       <video
         ref={videoRef}
         className='w-full h-full object-cover'
         src={videoUrl}
-        onClick={togglePlay}
-        onMouseEnter={() => setShowControls(true)}
-        onMouseLeave={() => setShowControls(false)}
+        onClick={showControls ? togglePlay : undefined}
+        onMouseEnter={showControls ? () => setControlsVisible(true) : undefined}
+        onMouseLeave={showControls ? () => setControlsVisible(false) : undefined}
+        autoPlay={!showControls}
+        loop={!showControls}
+        muted={!showControls}
+        playsInline={!showControls}
       />
 
-      {/* Control overlay */}
-      {showControls && (
+      {/* Control overlay - only show if showControls is true */}
+      {showControls && controlsVisible && (
         <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4'>
           {/* Play/pause button */}
           <div className='flex items-center justify-center mb-2'>
