@@ -4,7 +4,7 @@ import { mockCameras } from "../utils/mockData";
 
 const Monitor = () => {
   const [expandedCamera, setExpandedCamera] = useState(null);
-  const [layout, setLayout] = useState("grid"); // grid, single, quad
+  const [layout, setLayout] = useState("quad"); // Changed default to "quad" for 2x2 layout
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update time every second
@@ -28,14 +28,26 @@ const Monitor = () => {
     if (expandedCamera) {
       return "grid-cols-1";
     }
-    switch (layout) {
-      case "single":
-        return "grid-cols-1";
-      case "quad":
-        return "grid-cols-2";
-      default:
-        return "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
-    }
+    // Always use 2x2 grid layout (quad)
+    return "grid-cols-2";
+
+    // Commented out other layout options
+    // switch (layout) {
+    //   case "single":
+    //     return "grid-cols-1";
+    //   case "quad":
+    //     return "grid-cols-2";
+    //   default:
+    //     return "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+    // }
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
   };
 
   return (
@@ -47,11 +59,12 @@ const Monitor = () => {
             <h1 className="text-2xl font-bold text-white">Monitor System</h1>
             <p className="text-gray-400 text-sm">
               {mockCameras.filter((c) => c.status === "online").length} cameras
-              online
+              online • {formatDate(currentTime)} •{" "}
+              {currentTime.toLocaleTimeString()}
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            {/* Layout selection */}
+          {/* Layout selection - commented out */}
+          {/* <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-400">Layout:</span>
               <div className="flex bg-slate-700 rounded-lg p-1">
@@ -75,7 +88,7 @@ const Monitor = () => {
                 ))}
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </header>
 
