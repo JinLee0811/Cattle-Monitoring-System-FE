@@ -55,7 +55,7 @@ const Logs = () => {
   });
 
   return (
-    <div className='min-h-screen bg-slate-900'>
+    <div className='h-screen bg-slate-900 overflow-hidden'>
       {/* Header */}
       <header className='bg-slate-800 border-b border-slate-700 px-6 py-4 ml-64'>
         <div className='flex items-center justify-between'>
@@ -68,10 +68,10 @@ const Logs = () => {
         </div>
       </header>
 
-      <div className='flex'>
+      <div className='flex h-full'>
         {/* Main content */}
-        <main className='flex-1 ml-64 p-6'>
-          <div className='bg-slate-800 rounded-lg p-6 h-full'>
+        <main className='flex-1 ml-64 p-6 overflow-hidden'>
+          <div className='bg-slate-800 rounded-lg p-6 h-full flex flex-col'>
             <div className='flex items-center justify-between mb-6'>
               <h2 className='text-xl font-bold text-white'>System Logs</h2>
               <div className='flex items-center space-x-2'>
@@ -146,34 +146,78 @@ const Logs = () => {
             </div>
 
             {/* Log list */}
-            <div className='space-y-3 max-h-96 overflow-y-auto'>
-              {filteredLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className={`p-4 rounded-lg border ${severityColors[log.severity]} transition-all hover:scale-[1.02]`}>
-                  <div className='flex items-start justify-between'>
-                    <div className='flex items-start space-x-3 flex-1'>
-                      <div className='mt-1'>{typeIcons[log.type]}</div>
-                      <div className='flex-1'>
-                        <div className='flex items-center space-x-2 mb-1'>
-                          <span className='text-sm font-medium'>{log.camera}</span>
-                          <span className='text-xs opacity-75'>•</span>
-                          <span className='text-xs opacity-75'>{log.location}</span>
+            <div className='flex-1 overflow-y-auto'>
+              <div className='space-y-4'>
+                {filteredLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className={`p-5 rounded-lg border ${severityColors[log.severity]} transition-all hover:scale-[1.01]`}>
+                    <div className='flex items-start justify-between'>
+                      <div className='flex items-start space-x-4 flex-1'>
+                        <div className='p-2 bg-slate-700/50 rounded-lg mt-1'>
+                          {typeIcons[log.type]}
                         </div>
-                        <p className='text-sm leading-relaxed'>{log.message}</p>
+                        <div className='flex-1 space-y-3'>
+                          {/* Header info */}
+                          <div className='flex items-center space-x-3'>
+                            <div className='flex items-center space-x-2'>
+                              <span className='text-sm font-semibold'>{log.camera}</span>
+                              <span className='text-xs opacity-75'>•</span>
+                              <span className='text-xs opacity-75'>{log.location}</span>
+                            </div>
+                            <div className='text-xs text-gray-400'>
+                              Log ID: {log.id} | Type: {log.type}
+                            </div>
+                          </div>
+                          
+                          {/* Message */}
+                          <div className='bg-slate-700/30 rounded-lg p-3'>
+                            <p className='text-sm leading-relaxed'>{log.message}</p>
+                          </div>
+
+                          {/* Additional details in horizontal layout */}
+                          <div className='flex flex-wrap gap-6 text-xs'>
+                            <div>
+                              <span className='text-gray-400'>Severity:</span>
+                              <span className='ml-2 font-medium capitalize'>{log.severity}</span>
+                            </div>
+                            <div>
+                              <span className='text-gray-400'>Duration:</span>
+                              <span className='ml-2 font-medium'>2.3s</span>
+                            </div>
+                            <div>
+                              <span className='text-gray-400'>Process ID:</span>
+                              <span className='ml-2 font-medium'>#{Math.floor(Math.random() * 9999)}</span>
+                            </div>
+                            <div>
+                              <span className='text-gray-400'>Status:</span>
+                              <span className='ml-2 font-medium text-green-400'>Active</span>
+                            </div>
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className='flex space-x-2'>
+                            <button className='text-xs px-3 py-1 bg-farm-green text-white rounded hover:bg-green-600 transition-colors'>
+                              View Details
+                            </button>
+                            <button className='text-xs px-3 py-1 bg-slate-600 text-gray-300 rounded hover:bg-slate-500 transition-colors'>
+                              Export
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className='text-right'>
-                      <div className='text-xs opacity-75 mb-1'>
-                        {new Date(log.timestamp).toLocaleTimeString()}
-                      </div>
-                      <div className='text-xs opacity-75'>
-                        {new Date(log.timestamp).toLocaleDateString()}
+                      <div className='text-right ml-4'>
+                        <div className='text-sm font-medium opacity-90'>
+                          {new Date(log.timestamp).toLocaleTimeString()}
+                        </div>
+                        <div className='text-xs opacity-75'>
+                          {new Date(log.timestamp).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
 

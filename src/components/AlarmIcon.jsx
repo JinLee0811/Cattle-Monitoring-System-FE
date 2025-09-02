@@ -104,12 +104,12 @@ const AlarmIcon = () => {
                     </div>
 
                     {!alarm.resolved && (
-                      <div className='mt-3 flex space-x-2'>
-                        <button className='text-xs px-2 py-1 bg-farm-green text-white rounded hover:bg-green-600 transition-colors'>
-                          Acknowledge
-                        </button>
-                        <button className='text-xs px-2 py-1 bg-slate-600 text-gray-300 rounded hover:bg-slate-500 transition-colors'>
-                          Dismiss
+                      <div className='mt-3'>
+                        <button className='text-xs px-3 py-1 bg-farm-green text-white rounded hover:bg-green-600 transition-colors flex items-center space-x-1'>
+                          <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
+                          </svg>
+                          <span>Check</span>
                         </button>
                       </div>
                     )}

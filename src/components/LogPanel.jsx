@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { mockLogs } from "../utils/mockData";
 
 const LogPanel = () => {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const severityColors = {
     error: "text-red-400 bg-red-400/10 border-red-400/20",
@@ -58,9 +60,19 @@ const LogPanel = () => {
     <div className='bg-slate-800 rounded-lg p-6 h-full'>
                   <div className='flex items-center justify-between mb-6'>
               <h2 className='text-xl font-bold text-white'>System Logs</h2>
-              <div className='flex items-center space-x-2'>
-                <span className='text-sm text-gray-400'>Real-time</span>
-                <div className='w-2 h-2 bg-green-400 rounded-full animate-pulse'></div>
+              <div className='flex items-center space-x-4'>
+                <div className='flex items-center space-x-2'>
+                  <span className='text-sm text-gray-400'>Real-time</span>
+                  <div className='w-2 h-2 bg-green-400 rounded-full animate-pulse'></div>
+                </div>
+                <button 
+                  onClick={() => navigate('/logs')}
+                  className='px-4 py-2 bg-farm-green text-white text-sm font-medium rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2'>
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+                  </svg>
+                  <span>View All</span>
+                </button>
               </div>
             </div>
 
