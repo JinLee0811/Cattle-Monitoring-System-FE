@@ -1,10 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import VideoPlayer from "../components/VideoPlayer";
 import { mockCameras } from "../utils/mockData";
 
 const Monitor = () => {
   const [expandedCamera, setExpandedCamera] = useState(null);
   const [layout, setLayout] = useState("grid"); // grid, single, quad
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleCameraClick = (cameraId) => {
     if (expandedCamera === cameraId) {
@@ -186,7 +196,7 @@ const Monitor = () => {
                           </div>
                         )}
                         <span className="text-white text-xs">
-                          {new Date().toLocaleTimeString()}
+                          {currentTime.toLocaleTimeString()}
                         </span>
                       </div>
                     </div>
