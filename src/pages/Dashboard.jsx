@@ -314,9 +314,7 @@ const Dashboard = () => {
             <div className="space-y-6">
               {/* Weather (simple) */}
               <div className="bg-slate-800 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  Weather & Alerts
-                </h3>
+                <h3 className="text-lg font-bold text-white mb-4">Weather</h3>
                 {loadingWeather ? (
                   <div className="text-sm text-gray-400">
                     Loading weather...
@@ -377,7 +375,7 @@ const Dashboard = () => {
               {/* Camera status */}
               <div className="bg-slate-800 rounded-lg p-6">
                 <h3 className="text-lg font-bold text-white mb-4">
-                  Camera Status
+                  Camera Online Status
                 </h3>
                 <div className="h-64 overflow-y-auto">
                   <div className="space-y-3">
@@ -513,9 +511,8 @@ const Dashboard = () => {
                       Behavior Analysis
                     </div>
                     <div className="text-white">
-                      Normal cattle behavior detected. All animals appear
-                      healthy and active. No signs of distress or unusual
-                      movement patterns observed.
+                      Normal cattle behavior detected. No signs of distress or
+                      unusual movement patterns observed.
                     </div>
                   </div>
                 ) : null;

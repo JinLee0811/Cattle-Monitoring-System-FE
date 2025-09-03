@@ -222,14 +222,13 @@ const Monitor = () => {
           {/* Camera list summary */}
           <div className="mt-6 bg-slate-800 rounded-lg p-6">
             <h3 className="text-lg font-bold text-white mb-4">
-              Camera Summary
+              Camera Online Status
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {mockCameras.map((camera) => (
                 <div
                   key={camera.id}
-                  className="p-4 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer"
-                  onClick={() => handleCameraClick(camera.id)}
+                  className="p-4 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-white">{camera.name}</h4>
