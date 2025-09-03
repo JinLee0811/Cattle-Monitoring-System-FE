@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import VideoPlayer from "../components/VideoPlayer";
 import LogPanel from "../components/LogPanel";
 import { mockCameras } from "../utils/mockData";
@@ -38,6 +39,7 @@ const Dashboard = () => {
   const [weather, setWeather] = useState(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
   const [weatherError, setWeatherError] = useState(null);
+  const [searchParams] = useSearchParams();
 
   // Update current time
   useEffect(() => {
@@ -47,6 +49,17 @@ const Dashboard = () => {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Handle camera parameter from URL
+  useEffect(() => {
+    const cameraParam = searchParams.get("camera");
+    if (cameraParam) {
+      const cameraId = parseInt(cameraParam);
+      if (cameraId && cameraId >= 1 && cameraId <= mockCameras.length) {
+        setSelectedCamera(cameraId);
+      }
+    }
+  }, [searchParams]);
 
   // Fetch current weather using geolocation (fallback to Sydney)
   useEffect(() => {
@@ -382,11 +395,12 @@ const Dashboard = () => {
                     {mockCameras.map((camera) => (
                       <div
                         key={camera.id}
-                        className={`p-3 rounded-lg border ${
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors hover:bg-opacity-20 ${
                           camera.status === "online"
-                            ? "border-green-500/20 bg-green-500/10"
-                            : "border-red-500/20 bg-red-500/10"
+                            ? "border-green-500/20 bg-green-500/10 hover:bg-green-500/20"
+                            : "border-red-500/20 bg-red-500/10 hover:bg-red-500/20"
                         }`}
+                        onClick={() => setSelectedCamera(camera.id)}
                       >
                         <div className="flex items-center justify-between">
                           <div>

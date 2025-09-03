@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import VideoPlayer from "../components/VideoPlayer";
 import { mockCameras } from "../utils/mockData";
 
@@ -6,6 +7,7 @@ const Monitor = () => {
   const [expandedCamera, setExpandedCamera] = useState(null);
   const [layout, setLayout] = useState("quad"); // Changed default to "quad" for 2x2 layout
   const [currentTime, setCurrentTime] = useState(new Date());
+  const navigate = useNavigate();
 
   // Update time every second
   useEffect(() => {
@@ -22,6 +24,10 @@ const Monitor = () => {
     } else {
       setExpandedCamera(cameraId);
     }
+  };
+
+  const handleCameraDoubleClick = (cameraId) => {
+    navigate(`/?camera=${cameraId}`);
   };
 
   const getGridClass = () => {
@@ -103,9 +109,10 @@ const Monitor = () => {
               return (
                 <div
                   key={camera.id}
-                  className={`relative bg-slate-800 rounded-lg overflow-hidden transition-all duration-300 ${
+                  className={`relative bg-slate-800 rounded-lg overflow-hidden transition-all duration-300 cursor-pointer ${
                     isExpanded ? "col-span-1 row-span-1" : ""
                   }`}
+                  onDoubleClick={() => handleCameraDoubleClick(camera.id)}
                 >
                   {/* Camera header */}
                   <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-4">
@@ -228,7 +235,8 @@ const Monitor = () => {
               {mockCameras.map((camera) => (
                 <div
                   key={camera.id}
-                  className="p-4 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
+                  className="p-4 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer"
+                  onClick={() => handleCameraDoubleClick(camera.id)}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-white">{camera.name}</h4>
