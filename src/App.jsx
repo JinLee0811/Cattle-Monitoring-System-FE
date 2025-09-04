@@ -1,11 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
+import { useTheme } from "./hooks/useTheme";
 import Sidebar from "./components/Sidebar";
 import AlarmIcon from "./components/AlarmIcon";
 import Dashboard from "./pages/Dashboard";
 import Monitor from "./pages/Monitor";
 import Logs from "./pages/Logs";
 import Upload from "./pages/Upload";
+import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 
 const ProtectedRoute = ({ children }) => {
@@ -41,6 +43,9 @@ const Layout = ({ children }) => {
 };
 
 function App() {
+  // 테마 초기화
+  useTheme();
+
   return (
     <Router>
       <div className='App'>
@@ -82,6 +87,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Upload />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/settings'
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Settings />
                 </Layout>
               </ProtectedRoute>
             }

@@ -33,7 +33,7 @@ const VideoPlayer = ({ videoUrl, cameraName, location, isLive = false, showContr
       video.autoplay = true;
       video.loop = true;
       video.muted = true; // Mute for auto-play
-      video.play().catch(e => console.log('Auto-play failed:', e));
+      video.play().catch((e) => console.log("Auto-play failed:", e));
     }
 
     return () => {

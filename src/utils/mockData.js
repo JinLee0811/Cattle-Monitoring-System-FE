@@ -58,6 +58,7 @@ export const mockCameras = [
     resolution: "1080p",
     fps: 30,
     recording: true,
+    videoFile: "cam1.mov",
   },
   {
     id: 2,
@@ -68,6 +69,7 @@ export const mockCameras = [
     resolution: "1080p",
     fps: 30,
     recording: true,
+    videoFile: "cam2.mov",
   },
   {
     id: 3,
@@ -78,6 +80,7 @@ export const mockCameras = [
     resolution: "720p",
     fps: 25,
     recording: true,
+    videoFile: "cam3.mov",
   },
   {
     id: 4,
@@ -88,6 +91,7 @@ export const mockCameras = [
     resolution: "1080p",
     fps: 30,
     recording: false,
+    videoFile: null,
   },
 ];
 

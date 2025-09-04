@@ -107,6 +107,37 @@ src/
 
 ## 🔧 Development Info
 
+🌐 Git Push Guide
+
+Initialize Git (if not already done)
+
+git init
+
+Add Remote Repository
+
+git remote add origin https://github.com/USERNAME/REPOSITORY.git
+
+Create and Switch to a Branch (optional)
+
+git checkout -b main
+
+또는 최신 Git:
+
+git switch -c main
+
+Commit Your Changes
+
+git add .
+git commit -m "Initial commit"
+
+Push to Remote Repository
+
+git push -u origin main
+
+👉 After the first push, you can simply use:
+
+git push
+
 ### Mock Data
 
 All data is managed in `src/utils/mockData.js`:

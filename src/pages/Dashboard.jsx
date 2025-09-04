@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import VideoPlayer from "../components/VideoPlayer";
 import LogPanel from "../components/LogPanel";
 import { mockCameras } from "../utils/mockData";
+import { detectingLogsMock } from "../utils/detectingLogsMock";
 
-const USE_WEATHER_MOCK = true; // 백엔드 없이 임시 데이터 사용
+const USE_WEATHER_MOCK = false;
 
 const mockWeatherData = {
   current: {
@@ -39,7 +40,21 @@ const Dashboard = () => {
   const [weather, setWeather] = useState(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
   const [weatherError, setWeatherError] = useState(null);
+  const [showRiskView, setShowRiskView] = useState(false);
+  const [riskIndex, setRiskIndex] = useState(0);
+
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Detecting Logs KPI counts (shared with Logs.jsx mock)
+  const kpiCounts = useMemo(() => {
+    return {
+      behavior: detectingLogsMock.filter((l) => l.category === "behavior").length,
+      weather: detectingLogsMock.filter((l) => l.category === "weather").length,
+      sound: detectingLogsMock.filter((l) => l.category === "sound").length,
+      camera: detectingLogsMock.filter((l) => l.category === "camera").length,
+    };
+  }, []);
 
   // Update current time
   useEffect(() => {
@@ -76,16 +91,13 @@ const Dashboard = () => {
       try {
         setLoadingWeather(true);
         setWeatherError(null);
-        const res = await fetch(
-          `http://localhost:5000/api/weather/current?lat=${lat}&lon=${lon}`
-        );
+        const res = await fetch(`/api/weather/current?lat=${lat}&lon=${lon}`);
         if (!res.ok) throw new Error(`Weather request failed: ${res.status}`);
         const data = await res.json();
         setWeather(data);
-      } catch {
-        // 실패 시 모의 데이터로 대체
-        setWeather(mockWeatherData);
-        setWeatherError(null);
+      } catch (err) {
+        setWeather(null);
+        setWeatherError(err?.message || "Failed to fetch weather");
       } finally {
         setLoadingWeather(false);
       }
@@ -124,48 +136,73 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className='min-h-screen bg-slate-900'>
       {/* Header */}
-      <header className="bg-slate-800 border-b border-slate-700 px-6 py-4 ml-64">
-        <div className="flex items-center justify-between">
+      <header className='bg-slate-800 border-b border-slate-700 px-6 py-4 ml-64'>
+        <div className='flex items-center justify-between'>
           <div>
-            <h1 className="text-2xl font-bold text-white">
-              Smart Farm Monitoring Dashboard
-            </h1>
-            <p className="text-gray-400 text-sm">{formatDate(currentTime)}</p>
+            <h1 className='text-2xl font-bold text-white'>Smart Farm Monitoring Dashboard</h1>
+            <div className='flex items-center space-x-2 text-gray-400 text-sm'>
+              <span>{formatDate(currentTime)}</span>
+              <span className='text-slate-500'>|</span>
+              <span>{formatTime(currentTime)}</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className='flex items-center space-x-4'>
             {/* System status display */}
-            <div className="flex items-center space-x-2 text-sm text-gray-300">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <div className='flex items-center space-x-2 text-sm text-gray-300'>
+              <div className='w-2 h-2 bg-green-400 rounded-full animate-pulse'></div>
               <span>System Normal</span>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="flex">
+      <div className='flex'>
         {/* Main content */}
-        <main className="flex-1 ml-64 p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <main className='flex-1 ml-64 p-3'>
+          {/* Top Detecting Logs bar */}
+          <div className='mb-3 rounded-md border border-slate-700 bg-slate-800 px-4 py-2'>
+            <div className='flex items-center justify-between'>
+              <div className='text-white font-bold text-lg'>Detecting Logs</div>
+              <button
+                onClick={() => navigate("/logs")}
+                className='text-xs px-3 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'>
+                View detail
+              </button>
+            </div>
+            <div className='mt-3 flex items-stretch text-center divide-x divide-slate-700/60'>
+              <div className='flex-1 py-2'>
+                <div className='text-2xl font-extrabold text-rose-400'>{kpiCounts.behavior}</div>
+                <div className='mt-1 text-slate-300 text-xs'>Abnormal Behavior</div>
+              </div>
+              <div className='flex-1 py-2'>
+                <div className='text-2xl font-extrabold text-yellow-300'>{kpiCounts.weather}</div>
+                <div className='mt-1 text-slate-300 text-xs'>Weather Alerts</div>
+              </div>
+              <div className='flex-1 py-2'>
+                <div className='text-2xl font-extrabold text-cyan-300'>{kpiCounts.sound}</div>
+                <div className='mt-1 text-slate-300 text-xs'>Abnormal Sound</div>
+              </div>
+              <div className='flex-1 py-2'>
+                <div className='text-2xl font-extrabold text-indigo-300'>{kpiCounts.camera}</div>
+                <div className='mt-1 text-slate-300 text-xs'>Camera Issues</div>
+              </div>
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
             {/* Main video player */}
-            <div className="lg:col-span-2">
-              <div className="bg-slate-800 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-white">
-                    Real-time Monitoring
-                  </h2>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-400">
-                      Select Camera:
-                    </span>
+            <div className='lg:col-span-2'>
+              <div className='bg-slate-800 rounded-lg p-6'>
+                <div className='flex items-center justify-between mb-2'>
+                  <h2 className='text-xl font-bold text-white'>Real-time Monitoring</h2>
+                  <div className='flex items-center space-x-2'>
+                    <span className='text-sm text-gray-400'>Select Camera:</span>
                     <select
                       value={selectedCamera}
-                      onChange={(e) =>
-                        setSelectedCamera(Number(e.target.value))
-                      }
-                      className="bg-slate-700 border border-slate-600 rounded px-3 py-1 text-white text-sm focus:outline-none focus:border-farm-green"
-                    >
+                      onChange={(e) => setSelectedCamera(Number(e.target.value))}
+                      className='bg-slate-700 border border-slate-600 rounded px-3 py-1 text-white text-sm focus:outline-none focus:border-farm-green'>
                       {mockCameras.map((camera) => (
                         <option key={camera.id} value={camera.id}>
                           {camera.name} - {camera.location}
@@ -176,36 +213,30 @@ const Dashboard = () => {
                 </div>
 
                 {/* Camera view with Monitor page format */}
-                <div className="relative bg-slate-800 rounded-lg overflow-hidden">
+                <div className='relative bg-slate-800 rounded-lg overflow-hidden'>
                   {/* Camera header */}
-                  <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-4">
-                    <div className="flex items-center justify-between">
+                  <div className='absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-4'>
+                    <div className='flex items-center justify-between'>
                       <div>
-                        <h3 className="text-white font-semibold text-sm">
-                          {mockCameras.find((c) => c.id === selectedCamera)
-                            ?.name || "Camera 1"}
+                        <h3 className='text-white font-semibold text-sm'>
+                          {mockCameras.find((c) => c.id === selectedCamera)?.name || "Camera 1"}
                         </h3>
-                        <p className="text-gray-300 text-xs">
-                          {mockCameras.find((c) => c.id === selectedCamera)
-                            ?.location || "Barn A"}
+                        <p className='text-gray-300 text-xs'>
+                          {mockCameras.find((c) => c.id === selectedCamera)?.location || "Barn A"}
                         </p>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className='flex items-center space-x-2'>
                         {(() => {
-                          const camera = mockCameras.find(
-                            (c) => c.id === selectedCamera
-                          );
+                          const camera = mockCameras.find((c) => c.id === selectedCamera);
                           const isOnline = camera?.status === "online";
                           return isOnline ? (
-                            <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
+                            <div className='px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white'>
                               NORMAL
                             </div>
                           ) : (
                             <>
-                              <div className="w-2 h-2 rounded-full bg-red-400"></div>
-                              <span className="text-white text-xs">
-                                OFFLINE
-                              </span>
+                              <div className='w-2 h-2 rounded-full bg-red-400'></div>
+                              <span className='text-white text-xs'>OFFLINE</span>
                             </>
                           );
                         })()}
@@ -213,185 +244,398 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  {/* Video player */}
-                  <div className="aspect-video bg-black">
-                    {(() => {
-                      const camera = mockCameras.find(
-                        (c) => c.id === selectedCamera
-                      );
-                      const isOnline = camera?.status === "online";
-                      return isOnline ? (
-                        <VideoPlayer
-                          videoUrl="https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
-                          cameraName={camera?.name || "Camera 1"}
-                          location={camera?.location || "Barn A"}
-                          isLive={true}
-                          showControls={false}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <div className="text-center">
-                            <svg
-                              className="w-16 h-16 text-gray-600 mx-auto mb-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                              />
-                            </svg>
-                            <p className="text-gray-400 text-sm">
-                              Camera Offline
-                            </p>
-                            <p className="text-gray-500 text-xs mt-1">
-                              Last update: {camera?.lastUpdate || "Unknown"}
-                            </p>
+                  {/* Video player with overlaid footer */}
+                  <div className='relative'>
+                    <div className='aspect-video bg-black'>
+                      {(() => {
+                        const camera = mockCameras.find((c) => c.id === selectedCamera);
+                        const isOnline = camera?.status === "online";
+                        return isOnline ? (
+                          <video
+                            key={`video-${selectedCamera}`}
+                            className='w-full h-full object-cover'
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            onError={(e) => console.error("Video error:", e)}
+                            onLoadStart={() =>
+                              console.log("Video loading started for:", camera?.videoFile)
+                            }
+                            onCanPlay={() => console.log("Video can play for:", camera?.videoFile)}>
+                            <source src={`./video/${camera?.videoFile}`} type='video/quicktime' />
+                            <source src={`./video/${camera?.videoFile}`} type='video/mp4' />
+                            <source src={`./video/${camera?.videoFile}`} type='video/webm' />
+                            Your browser does not support the video tag.
+                          </video>
+                        ) : (
+                          <div className='w-full h-full flex items-center justify-center'>
+                            <div className='text-center'>
+                              <svg
+                                className='w-16 h-16 text-gray-600 mx-auto mb-4'
+                                fill='none'
+                                stroke='currentColor'
+                                viewBox='0 0 24 24'>
+                                <path
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                  strokeWidth={2}
+                                  d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
+                                />
+                              </svg>
+                              <p className='text-gray-400 text-sm'>Camera Offline</p>
+                              <p className='text-gray-500 text-xs mt-1'>
+                                Last update: {camera?.lastUpdate || "Unknown"}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Camera info footer (stays over black area) */}
+                    <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4'>
+                      <div className='flex items-center justify-between'>
+                        <div className='text-white text-xs'>
+                          <div className='flex items-center space-x-4'>
+                            {(() => {
+                              const camera = mockCameras.find((c) => c.id === selectedCamera);
+                              return (
+                                <>
+                                  <span>{camera?.resolution || "1080p"}</span>
+                                  <span>{camera?.fps || "30"} FPS</span>
+                                  <span
+                                    className={`flex items-center space-x-1 ${
+                                      camera?.recording ? "text-red-400" : "text-gray-400"
+                                    }`}>
+                                    <div
+                                      className={`w-2 h-2 rounded-full ${
+                                        camera?.recording
+                                          ? "bg-red-400 animate-pulse"
+                                          : "bg-gray-400"
+                                      }`}></div>
+                                    <span>{camera?.recording ? "Recording" : "Stopped"}</span>
+                                  </span>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
-                      );
-                    })()}
-                  </div>
 
-                  {/* Camera info footer */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-white text-xs">
-                        <div className="flex items-center space-x-4">
+                        {/* LIVE indicator and time */}
+                        <div className='flex items-center space-x-3'>
                           {(() => {
-                            const camera = mockCameras.find(
-                              (c) => c.id === selectedCamera
-                            );
+                            const camera = mockCameras.find((c) => c.id === selectedCamera);
+                            const isOnline = camera?.status === "online";
                             return (
-                              <>
-                                <span>{camera?.resolution || "1080p"}</span>
-                                <span>{camera?.fps || "30"} FPS</span>
-                                <span
-                                  className={`flex items-center space-x-1 ${
-                                    camera?.recording
-                                      ? "text-red-400"
-                                      : "text-gray-400"
-                                  }`}
-                                >
-                                  <div
-                                    className={`w-2 h-2 rounded-full ${
-                                      camera?.recording
-                                        ? "bg-red-400 animate-pulse"
-                                        : "bg-gray-400"
-                                    }`}
-                                  ></div>
-                                  <span>
-                                    {camera?.recording
-                                      ? "Recording"
-                                      : "Stopped"}
-                                  </span>
-                                </span>
-                              </>
+                              isOnline && (
+                                <div className='flex items-center space-x-1'>
+                                  <div className='w-2 h-2 rounded-full bg-red-400 animate-pulse'></div>
+                                  <span className='text-white text-xs font-medium'>LIVE</span>
+                                </div>
+                              )
                             );
                           })()}
+                          <span className='text-white text-xs'>
+                            {currentTime.toLocaleTimeString()}
+                          </span>
                         </div>
-                      </div>
-
-                      {/* LIVE indicator and time */}
-                      <div className="flex items-center space-x-3">
-                        {(() => {
-                          const camera = mockCameras.find(
-                            (c) => c.id === selectedCamera
-                          );
-                          const isOnline = camera?.status === "online";
-                          return (
-                            isOnline && (
-                              <div className="flex items-center space-x-1">
-                                <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse"></div>
-                                <span className="text-white text-xs font-medium">
-                                  LIVE
-                                </span>
-                              </div>
-                            )
-                          );
-                        })()}
-                        <span className="text-white text-xs">
-                          {currentTime.toLocaleTimeString()}
-                        </span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Compact Live Detection Status inside video card */}
+                  {(() => {
+                    const camera = mockCameras.find((c) => c.id === selectedCamera);
+                    const isOnline = camera?.status === "online";
+                    return (
+                      <div className='mt-3 rounded-md bg-slate-700/60 border border-slate-600 p-3'>
+                        <div className='flex items-center justify-between mb-2'>
+                          <div className='text-xs text-gray-300 font-semibold'>
+                            LIVE DETECTION STATUS
+                          </div>
+                          <div className='flex items-center space-x-2'>
+                            <span className='text-xs text-gray-300'>
+                              {isOnline ? "REAL-TIME" : "STOPPED"}
+                            </span>
+                            <div
+                              className={`w-2 h-2 rounded-full ${isOnline ? "bg-red-400 animate-pulse" : "bg-gray-400"}`}></div>
+                          </div>
+                        </div>
+                        <div className='grid grid-cols-3 gap-3'>
+                          <div>
+                            <div className='text-[10px] text-gray-400'>Camera</div>
+                            <div className='text-xs text-white font-medium truncate'>
+                              {camera?.name || "Camera 1"}
+                            </div>
+                            <div className='text-[10px] text-gray-500 truncate'>
+                              {camera?.location || "Barn A"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className='text-[10px] text-gray-400'>Current Status</div>
+                            <div
+                              className={`text-sm font-bold ${isOnline ? "text-green-400" : "text-gray-400"}`}>
+                              {isOnline ? "NORMAL" : "OFFLINE"}
+                            </div>
+                            {isOnline && (
+                              <div className='text-[10px] text-gray-500'>Confidence: 95.2%</div>
+                            )}
+                          </div>
+                          <div>
+                            <div className='text-[10px] text-gray-400'>Detection Time</div>
+                            <div className='text-xs text-white font-medium'>
+                              {formatTime(currentTime)}
+                            </div>
+                            <div className='text-[10px] text-gray-500'>
+                              {currentTime.toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        {isOnline && (
+                          <div className='mt-4 p-2 bg-slate-600/60 rounded text-xs text-white min-h-[64px]'>
+                            Normal cattle behavior detected. No signs of distress or unusual
+                            movement patterns observed.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
 
             {/* System status cards */}
-            <div className="space-y-6">
+            <div className='space-y-6'>
+              {/* Detecting Logs summary moved to the top bar above. This box removed by request */}
               {/* Weather (simple) */}
-              <div className="bg-slate-800 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-white mb-4">Weather</h3>
+              <div className='bg-slate-800 rounded-lg p-6 relative overflow-hidden h-74 flex flex-col'>
+                <div className='flex items-center justify-between mb-4'>
+                  <h3 className='text-lg font-bold text-white'>Weather</h3>
+                  <button
+                    type='button'
+                    onClick={() => setShowRiskView((v) => !v)}
+                    className={`inline-flex items-center gap-2 text-xs px-3 py-1 rounded-md border focus:outline-none transition-colors ${
+                      showRiskView
+                        ? "border-slate-400/40 text-slate-300 hover:bg-slate-400/10"
+                        : "border-red-400/50 text-red-300 hover:bg-red-400/10 shadow-[0_0_0_1px_rgba(248,113,113,0.15)]"
+                    }`}>
+                    <svg viewBox='0 0 24 24' fill='none' className='w-4 h-4'>
+                      <path
+                        d='M12 8v4l3 3'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                      />
+                    </svg>
+                    {showRiskView ? "Back to current" : "Upcoming risks"}
+                  </button>
+                </div>
                 {loadingWeather ? (
-                  <div className="text-sm text-gray-400">
-                    Loading weather...
-                  </div>
+                  <div className='text-sm text-gray-400'>Loading weather...</div>
                 ) : weatherError ? (
-                  <div className="text-sm text-red-400">
-                    Failed to load weather
-                  </div>
+                  <div className='text-sm text-red-400'>Failed to load weather: {weatherError}</div>
                 ) : weather ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-end space-x-3">
-                        <div className="text-2xl font-bold text-white">
-                          {Math.round(weather.current?.temperature)}°C
-                        </div>
-                        <div className="text-sm text-gray-400 capitalize">
-                          {weather.current?.description}
-                        </div>
-                      </div>
-                      {weather.current?.icon && (
-                        <img
-                          alt="icon"
-                          className="w-10 h-10"
-                          src={`https://openweathermap.org/img/wn/${weather.current.icon}@2x.png`}
-                        />
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {weather.location?.name}, {weather.location?.country}
-                    </div>
-                    {Array.isArray(weather.alerts) &&
-                    weather.alerts.length > 0 ? (
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {weather.alerts.slice(0, 4).map((a, idx) => (
-                          <div
-                            key={idx}
-                            className={`text-xs rounded-md border px-3 py-2 ${
-                              a.severity === "high"
-                                ? "border-red-400/30 bg-red-400/10 text-red-300"
-                                : a.severity === "medium"
-                                  ? "border-yellow-400/30 bg-yellow-400/10 text-yellow-300"
-                                  : "border-blue-400/30 bg-blue-400/10 text-blue-300"
-                            }`}
-                          >
-                            {a.message}
+                  <div className='space-y-3 flex-1'>
+                    {!showRiskView && (
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-end space-x-3'>
+                          <div className='text-2xl font-bold text-white'>
+                            {Math.round(weather.current?.temperature)}°C
                           </div>
-                        ))}
+                          <div className='text-sm text-gray-400 capitalize'>
+                            {weather.current?.description}
+                          </div>
+                          {weather.is_mock && (
+                            <span className='text-[10px] px-2 py-0.5 rounded-full border border-yellow-500/40 text-yellow-300'>
+                              MOCK
+                            </span>
+                          )}
+                        </div>
+                        {!showRiskView && weather.current?.icon && (
+                          <img
+                            alt='icon'
+                            className='w-10 h-10'
+                            src={`https://openweathermap.org/img/wn/${weather.current.icon}@2x.png`}
+                          />
+                        )}
                       </div>
+                    )}
+                    {!showRiskView ? (
+                      <>
+                        <div className='text-xs text-gray-500'>
+                          {weather.location?.name}, {weather.location?.country}
+                        </div>
+                        {/* alerts hidden to fit content height */}
+
+                        {/* mini stats */}
+                        <div className='mt-2 grid grid-cols-3 gap-2 text-center'>
+                          <div className='rounded-md border border-slate-700/60 p-2'>
+                            <div className='text-[10px] text-slate-400'>Humidity</div>
+                            <div className='text-[12px] text-white'>
+                              {weather.current?.humidity ?? "-"}%
+                            </div>
+                          </div>
+                          <div className='rounded-md border border-slate-700/60 p-2'>
+                            <div className='text-[10px] text-slate-400'>Wind</div>
+                            <div className='text-[12px] text-white'>
+                              {weather.current?.windSpeed ?? "-"} m/s
+                            </div>
+                          </div>
+                          <div className='rounded-md border border-slate-700/60 p-2'>
+                            <div className='text-[10px] text-slate-400'>Pressure</div>
+                            <div className='text-[12px] text-white'>
+                              {weather.current?.pressure ?? "-"} hPa
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* compact hourly forecast (mocked from current) */}
+                        <div className='mt-2 rounded-md border border-slate-700/60 bg-slate-700/20 p-2'>
+                          <div className='grid grid-cols-5 gap-2 text-center'>
+                            {[
+                              {
+                                t: "Now",
+                                temp: Math.round(weather.current?.temperature),
+                                icon: weather.current?.icon || "01d",
+                              },
+                              {
+                                t: "1h",
+                                temp: Math.round((weather.current?.temperature ?? 0) + 1),
+                                icon: "02d",
+                              },
+                              {
+                                t: "2h",
+                                temp: Math.round((weather.current?.temperature ?? 0) + 2),
+                                icon: "03d",
+                              },
+                              {
+                                t: "3h",
+                                temp: Math.round((weather.current?.temperature ?? 0) - 1),
+                                icon: "11d",
+                              },
+                              {
+                                t: "4h",
+                                temp: Math.round(weather.current?.temperature ?? 0),
+                                icon: "01n",
+                              },
+                            ].map((h, i) => (
+                              <div key={i} className='space-y-1'>
+                                <div className='text-[10px] text-slate-300'>{h.t}</div>
+                                <img
+                                  alt='h'
+                                  className='w-5 h-5 mx-auto'
+                                  src={`https://openweathermap.org/img/wn/${h.icon}.png`}
+                                />
+                                <div className='text-[10px] text-slate-200'>{h.temp}°</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
                     ) : (
-                      <div className="text-xs text-gray-400">No alerts</div>
+                      <div className='space-y-2'>
+                        {(() => {
+                          const risks = [
+                            {
+                              dayOffset: 3,
+                              severity: "high",
+                              title: "Heavy rain (60–90mm) with strong wind (18 m/s)",
+                              recommendation:
+                                "Move cattle to sheltered areas and prepare indoor pens",
+                            },
+                            {
+                              dayOffset: 2,
+                              severity: "medium",
+                              title: "Strong wind up to 15 m/s",
+                              recommendation: "Ensure windbreaks and secure loose equipment",
+                            },
+                            {
+                              dayOffset: 1,
+                              severity: "medium",
+                              title: "Moderate rain expected (20–30mm)",
+                              recommendation: "Check drainage routes and prepare bedding",
+                            },
+                          ];
+                          const r = risks[riskIndex % risks.length];
+                          const badgeIcon =
+                            r.severity === "high" ? "⚡" : r.icon === "wind" ? "💨" : "🌧";
+                          const badgeLabel =
+                            r.severity === "high" ? "Thunder" : r.icon === "wind" ? "Wind" : "Rain";
+                          return (
+                            <>
+                              <div
+                                className={`rounded-md border p-3 relative h-40 overflow-hidden flex flex-col ${r.severity === "high" ? "border-red-400/30 bg-red-400/10" : "border-yellow-400/30 bg-yellow-400/10"}`}>
+                                {/* top-left D-day badge */}
+                                <div className='absolute left-3 top-3'>
+                                  <span className='text-[11px] px-2 py-0.5 rounded-md bg-slate-900/40 border border-slate-600/40 text-slate-200'>
+                                    D+{r.dayOffset}
+                                  </span>
+                                </div>
+                                {/* top-right badge */}
+                                <span className='absolute right-3 top-3 inline-flex items-center justify-center'>
+                                  {r.severity === "high" && (
+                                    <span className='absolute -inset-1 rounded-full bg-red-400/30 animate-ping'></span>
+                                  )}
+                                  <span
+                                    className={`relative h-8 min-w-[92px] px-3 rounded-full flex items-center justify-center gap-1 ${r.severity === "high" ? "bg-red-500 text-white" : "bg-yellow-400 text-slate-900"}`}>
+                                    <span className='text-[13px] leading-none'>{badgeIcon}</span>
+                                    <span className='text-[11px] font-semibold leading-none tracking-wide'>
+                                      {badgeLabel}
+                                    </span>
+                                  </span>
+                                </span>
+                                {/* content below */}
+                                <div className='pt-10 overflow-y-auto'>
+                                  <div className='text-white text-sm font-medium'>{r.title}</div>
+                                  <div className='text-xs text-slate-200 mt-2'>
+                                    {r.recommendation}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className='flex justify-end'>
+                                <button
+                                  onClick={() => setRiskIndex((riskIndex + 1) % risks.length)}
+                                  className='text-xs px-3 py-1 rounded-md border border-slate-500 text-slate-200 hover:bg-slate-600/20'>
+                                  Next
+                                </button>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
                     )}
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-400">No weather data</div>
+                  <div className='text-sm text-gray-400'>No weather data</div>
                 )}
+
+                {/* Visual effects overlay */}
+                {!showRiskView && weather?.current?.description?.toLowerCase().includes("rain") && (
+                  <div className='pointer-events-none absolute inset-0 overflow-hidden'>
+                    {[...Array(20)].map((_, i) => (
+                      <span
+                        key={i}
+                        className='absolute w-1 h-3 bg-blue-300/30 animate-ping'
+                        style={{ left: `${(i * 5) % 100}%`, top: `${(i * 7) % 100}%` }}></span>
+                    ))}
+                  </div>
+                )}
+
+                {!showRiskView &&
+                  weather?.current?.description?.toLowerCase().includes("clear") && (
+                    <div className='pointer-events-none absolute -right-3 -top-3'>
+                      <div className='w-16 h-16 rounded-full bg-yellow-300/60 blur-sm animate-pulse'></div>
+                    </div>
+                  )}
               </div>
 
               {/* Camera status */}
-              <div className="bg-slate-800 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  Camera Online Status
-                </h3>
-                <div className="h-64 overflow-y-auto">
-                  <div className="space-y-3">
+              <div className='bg-slate-800 rounded-lg p-6'>
+                <h3 className='text-lg font-bold text-white mb-4'>Camera Online Status</h3>
+                <div className='h-82 overflow-y-auto'>
+                  <div className='space-y-3'>
                     {mockCameras.map((camera) => (
                       <div
                         key={camera.id}
@@ -400,28 +644,18 @@ const Dashboard = () => {
                             ? "border-green-500/20 bg-green-500/10 hover:bg-green-500/20"
                             : "border-red-500/20 bg-red-500/10 hover:bg-red-500/20"
                         }`}
-                        onClick={() => setSelectedCamera(camera.id)}
-                      >
-                        <div className="flex items-center justify-between">
+                        onClick={() => setSelectedCamera(camera.id)}>
+                        <div className='flex items-center justify-between'>
                           <div>
-                            <p className="text-sm font-medium text-white">
-                              {camera.name}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {camera.location}
-                            </p>
+                            <p className='text-sm font-medium text-white'>{camera.name}</p>
+                            <p className='text-xs text-gray-400'>{camera.location}</p>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className='flex items-center space-x-2'>
                             <div
                               className={`w-2 h-2 rounded-full ${
-                                camera.status === "online"
-                                  ? "bg-green-400"
-                                  : "bg-red-400"
-                              }`}
-                            ></div>
-                            <span className="text-xs text-gray-400">
-                              {camera.status}
-                            </span>
+                                camera.status === "online" ? "bg-green-400" : "bg-red-400"
+                              }`}></div>
+                            <span className='text-xs text-gray-400'>{camera.status}</span>
                           </div>
                         </div>
                       </div>
@@ -429,137 +663,6 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Log panel */}
-          <div className="mt-6">
-            {/* Real-time Detection Status */}
-            <div className="bg-slate-800 rounded-lg p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white">
-                  LIVE DETECTION STATUS
-                </h3>
-                <div className="flex items-center space-x-2">
-                  {(() => {
-                    const camera = mockCameras.find(
-                      (c) => c.id === selectedCamera
-                    );
-                    const isOnline = camera?.status === "online";
-                    return (
-                      <>
-                        <span className="text-sm text-gray-400">
-                          {isOnline ? "REAL-TIME" : "STOPPED"}
-                        </span>
-                        <div
-                          className={`w-2 h-2 rounded-full animate-pulse ${
-                            isOnline ? "bg-red-400" : "bg-gray-400"
-                          }`}
-                        ></div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {/* Camera Info */}
-                <div className="space-y-2">
-                  <div className="text-sm text-gray-400">Camera</div>
-                  <div className="text-white font-medium">
-                    {mockCameras.find((c) => c.id === selectedCamera)?.name ||
-                      "Camera 1"}
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {mockCameras.find((c) => c.id === selectedCamera)
-                      ?.location || "Barn A"}
-                  </div>
-                </div>
-
-                {/* Detection Status */}
-                <div className="space-y-2">
-                  <div className="text-sm text-gray-400">Current Status</div>
-                  {(() => {
-                    const camera = mockCameras.find(
-                      (c) => c.id === selectedCamera
-                    );
-                    const isOnline = camera?.status === "online";
-                    return (
-                      <>
-                        <div
-                          className={`text-2xl font-bold ${
-                            isOnline ? "text-green-400" : "text-gray-400"
-                          }`}
-                        >
-                          {isOnline ? "NORMAL" : "OFFLINE"}
-                        </div>
-                        {isOnline && (
-                          <div className="text-xs text-gray-500">
-                            Confidence: 95.2%
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-
-                {/* Timestamp */}
-                <div className="space-y-2">
-                  <div className="text-sm text-gray-400">Detection Time</div>
-                  <div className="text-white font-medium">
-                    {currentTime.toLocaleTimeString()}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {currentTime.toLocaleDateString()}
-                  </div>
-                </div>
-              </div>
-
-              {/* Behavior Analysis - Only show for online cameras */}
-              {(() => {
-                const camera = mockCameras.find((c) => c.id === selectedCamera);
-                const isOnline = camera?.status === "online";
-                return isOnline ? (
-                  <div className="mt-4 p-4 bg-slate-700 rounded-lg">
-                    <div className="text-sm text-gray-400 mb-2">
-                      Behavior Analysis
-                    </div>
-                    <div className="text-white">
-                      Normal cattle behavior detected. No signs of distress or
-                      unusual movement patterns observed.
-                    </div>
-                  </div>
-                ) : null;
-              })()}
-
-              {/* Action Buttons for Abnormal Conditions */}
-              {/* <div className="mt-4 flex space-x-3">
-                <button
-                  onClick={handleAcknowledge}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  Acknowledge
-                </button>
-                <button
-                  onClick={handleDismiss}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  Dismiss
-                </button>
-              </div> */}
-            </div>
-
-            {/* Camera-specific System Logs */}
-            <div className="bg-slate-800 rounded-lg p-6">
-              <h3 className="text-lg font-bold text-white mb-4">
-                {mockCameras.find((c) => c.id === selectedCamera)?.name ||
-                  "Camera 1"}{" "}
-                | Camera Logs
-              </h3>
-              <p className="text-sm text-gray-400 mb-4">
-                Historical abnormal behavior records for the selected camera
-              </p>
-              <LogPanel selectedCamera={selectedCamera} />
             </div>
           </div>
         </main>
