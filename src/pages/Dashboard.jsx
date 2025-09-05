@@ -433,9 +433,67 @@ const Dashboard = () => {
                   </button>
                 </div>
                 {loadingWeather ? (
-                  <div className='text-sm text-gray-400'>Loading weather...</div>
+                  <div className='space-y-3 flex-1 flex flex-col justify-center items-center'>
+                    <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400'></div>
+                    <div className='text-sm text-gray-400'>Loading weather data...</div>
+                    {/* 임시 데이터로 박스 크기 유지 */}
+                    <div className='w-full space-y-3 opacity-30'>
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-end space-x-3'>
+                          <div className='text-2xl font-bold text-white'>--°C</div>
+                          <div className='text-sm text-gray-400'>Loading...</div>
+                        </div>
+                        <div className='w-10 h-10 bg-gray-600 rounded'></div>
+                      </div>
+                      <div className='text-xs text-gray-500'>Loading location...</div>
+                      <div className='mt-2 grid grid-cols-3 gap-2 text-center'>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Humidity</div>
+                          <div className='text-[12px] text-white'>--%</div>
+                        </div>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Wind</div>
+                          <div className='text-[12px] text-white'>-- m/s</div>
+                        </div>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Pressure</div>
+                          <div className='text-[12px] text-white'>-- hPa</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ) : weatherError ? (
-                  <div className='text-sm text-red-400'>Failed to load weather: {weatherError}</div>
+                  <div className='space-y-3 flex-1 flex flex-col justify-center items-center'>
+                    <div className='text-sm text-red-400 text-center'>
+                      Failed to load weather: {weatherError}
+                    </div>
+                    <div className='text-xs text-gray-500 text-center'>Using fallback data</div>
+                    {/* 에러 시에도 박스 크기 유지 */}
+                    <div className='w-full space-y-3 opacity-50'>
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-end space-x-3'>
+                          <div className='text-2xl font-bold text-white'>24°C</div>
+                          <div className='text-sm text-gray-400'>clear sky</div>
+                        </div>
+                        <div className='w-10 h-10 bg-gray-600 rounded'></div>
+                      </div>
+                      <div className='text-xs text-gray-500'>Sydney, AU</div>
+                      <div className='mt-2 grid grid-cols-3 gap-2 text-center'>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Humidity</div>
+                          <div className='text-[12px] text-white'>62%</div>
+                        </div>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Wind</div>
+                          <div className='text-[12px] text-white'>3.6 m/s</div>
+                        </div>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Pressure</div>
+                          <div className='text-[12px] text-white'>1014 hPa</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ) : weather ? (
                   <div className='space-y-3 flex-1'>
                     {!showRiskView && (
@@ -608,7 +666,39 @@ const Dashboard = () => {
                     )}
                   </div>
                 ) : (
-                  <div className='text-sm text-gray-400'>No weather data</div>
+                  <div className='space-y-3 flex-1 flex flex-col justify-center items-center'>
+                    <div className='text-sm text-gray-400 text-center'>
+                      No weather data available
+                    </div>
+                    <div className='text-xs text-gray-500 text-center'>
+                      Please check your connection
+                    </div>
+                    {/* 데이터 없을 때도 박스 크기 유지 */}
+                    <div className='w-full space-y-3 opacity-30'>
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-end space-x-3'>
+                          <div className='text-2xl font-bold text-white'>--°C</div>
+                          <div className='text-sm text-gray-400'>No data</div>
+                        </div>
+                        <div className='w-10 h-10 bg-gray-600 rounded'></div>
+                      </div>
+                      <div className='text-xs text-gray-500'>Unknown location</div>
+                      <div className='mt-2 grid grid-cols-3 gap-2 text-center'>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Humidity</div>
+                          <div className='text-[12px] text-white'>--%</div>
+                        </div>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Wind</div>
+                          <div className='text-[12px] text-white'>-- m/s</div>
+                        </div>
+                        <div className='rounded-md border border-slate-700/60 p-2'>
+                          <div className='text-[10px] text-slate-400'>Pressure</div>
+                          <div className='text-[12px] text-white'>-- hPa</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {/* Visual effects overlay */}
