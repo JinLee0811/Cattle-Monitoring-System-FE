@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import VideoPlayer from "../components/VideoPlayer";
+import NotificationSystem from "../components/NotificationSystem";
+import LogPanel from "../components/LogPanel";
 import { mockCameras } from "../utils/mockData";
 
 const Monitor = () => {
@@ -121,25 +123,17 @@ const Monitor = () => {
                       </div>
                     </div>
 
-                    {/* Video player */}
+                    {/* Video player with AI detection */}
                     <div className={`bg-black ${isExpanded ? "aspect-[16/9]" : "aspect-video"}`}>
                       {isOnline ? (
-                        <video
-                          className='w-full h-full object-cover'
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                          onError={(e) => console.error("Video error:", e)}
-                          onLoadStart={() =>
-                            console.log("Video loading started for:", camera.videoFile)
-                          }
-                          onCanPlay={() => console.log("Video can play for:", camera.videoFile)}>
-                          <source src={`./video/${camera.videoFile}`} type='video/quicktime' />
-                          <source src={`./video/${camera.videoFile}`} type='video/mp4' />
-                          <source src={`./video/${camera.videoFile}`} type='video/webm' />
-                          Your browser does not support the video tag.
-                        </video>
+                        <VideoPlayer
+                          videoUrl={`/video/${camera.videoFile}`}
+                          cameraName={camera.name}
+                          location={camera.location}
+                          isLive={isExpanded}
+                          showControls={false}
+                          videoId={`camera_${camera.id}`}
+                        />
                       ) : (
                         <div className='w-full h-full flex items-center justify-center'>
                           <div className='text-center'>
@@ -205,7 +199,17 @@ const Monitor = () => {
 
           {/* (camera list summary moved to top) */}
         </main>
+
+        {/* Real-time log panel - only show when camera is expanded */}
+        {expandedCamera && (
+          <aside className='w-80 p-6'>
+            <LogPanel selectedCamera={expandedCamera} />
+          </aside>
+        )}
       </div>
+
+      {/* Real-time notification system */}
+      <NotificationSystem />
     </div>
   );
 };

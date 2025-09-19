@@ -1,157 +1,87 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { detectingLogsMock } from "../utils/detectingLogsMock";
+import { useLogs, logUtils } from "../services/logService";
 
 const AlarmIcon = () => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [alarms, setAlarms] = useState([]);
+  const [checkedAlarmIds, setCheckedAlarmIds] = useState(new Set()); // 체크된 알람 ID만 추적
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Convert detectingLogsMock to alarm format and add resolved status
-    const alarmData = detectingLogsMock.map((log) => ({
-      id: log.id,
-      timestamp: log.ts,
-      type: log.title,
-      severity: log.severity,
-      camera: log.camera,
-      location: log.location,
-      resolved: false,
-    }));
-    setAlarms(alarmData);
-  }, []);
+  // React Query를 사용한 로그 상태 관리
+  const { data: logsData } = useLogs();
 
-  useEffect(() => {
-    // Calculate unread alarm count
-    const unread = alarms.filter((alarm) => !alarm.resolved).length;
-    setUnreadCount(unread);
-  }, [alarms]);
+  // 로그를 알람 형태로 변환하고 체크된 알람 필터링
+  const alarms = logUtils.convertToAlarms(
+    (logsData?.logs || []).filter((log) => !checkedAlarmIds.has(log.id))
+  );
 
+  // 알람 수 업데이트
+  const unreadCount = alarms.length;
+
+  // 알람 체크 핸들러
   const handleCheck = (alarmId) => {
-    setAlarms((prevAlarms) =>
-      prevAlarms.map((alarm) => (alarm.id === alarmId ? { ...alarm, resolved: true } : alarm))
-    );
+    setCheckedAlarmIds((prev) => new Set([...prev, alarmId]));
+    console.log("Alarm checked and removed:", alarmId);
   };
 
-  const severityColors = {
-    high: "text-red-400 bg-red-400/10 border-red-400/20",
-    medium: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
-    low: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-  };
+  // 로그 삭제 시 체크된 알람에서도 제거
+  useEffect(() => {
+    const handleLogDeleted = (event) => {
+      const { logId } = event.detail;
+      setCheckedAlarmIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(logId);
+        return newSet;
+      });
+    };
 
-  const severityLabels = {
-    high: "High",
-    medium: "Medium",
-    low: "Low",
-  };
+    const handleAllLogsDeleted = () => {
+      setCheckedAlarmIds(new Set());
+    };
+
+    window.addEventListener("dummyLogDeleted", handleLogDeleted);
+    window.addEventListener("allLogsDeleted", handleAllLogsDeleted);
+
+    return () => {
+      window.removeEventListener("dummyLogDeleted", handleLogDeleted);
+      window.removeEventListener("allLogsDeleted", handleAllLogsDeleted);
+    };
+  }, []);
 
   return (
     <div className='relative'>
-      {/* Alarm icon */}
+      {/* Alarm Icon */}
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className='relative p-2 text-gray-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors'>
-        <svg className='w-8 h-8' fill='currentColor' viewBox='0 0 128 128'>
-          <path d='M95.89 88.25h-2.64V69.12a28.706 28.706 0 0 0-19.54-27.142V40a9.085 9.085 0 0 0-18.17 0v1.978A28.706 28.706 0 0 0 36 69.12v19.13h-2.64A8.751 8.751 0 0 0 24.61 97a8.76 8.76 0 0 0 8.75 8.75H52.3a12.445 12.445 0 0 0 24.65 0h18.94a8.75 8.75 0 0 0 0-17.5zm-31.271 24.718a8.974 8.974 0 0 1-8.785-7.218h17.582a8.979 8.979 0 0 1-8.797 7.218zM99.6 100.712a5.217 5.217 0 0 1-3.713 1.538H33.36a5.25 5.25 0 0 1-3.707-8.968 5.178 5.178 0 0 1 3.707-1.532h4.39A1.751 1.751 0 0 0 39.5 90V69.12a25.182 25.182 0 0 1 18.265-24.165 1.751 1.751 0 0 0 1.275-1.685V40a5.585 5.585 0 0 1 11.17 0v3.27a1.751 1.751 0 0 0 1.275 1.685A25.182 25.182 0 0 1 89.75 69.12V90a1.751 1.751 0 0 0 1.75 1.75h4.39a5.25 5.25 0 0 1 3.713 8.962zM86.2 31.636a1.75 1.75 0 0 0-1.122 3.316 25.408 25.408 0 0 1 17.272 24.086 1.75 1.75 0 0 0 3.5 0A28.907 28.907 0 0 0 86.2 31.636z' />
-          <path d='M90.443 21.627a1.75 1.75 0 0 0-1.122 3.315 34.61 34.61 0 0 1 23.522 32.807 1.75 1.75 0 1 0 3.5 0 38.106 38.106 0 0 0-25.9-36.122zM26.9 59.038a25.408 25.408 0 0 1 17.269-24.086 1.75 1.75 0 1 0-1.122-3.316A28.907 28.907 0 0 0 23.4 59.038a1.75 1.75 0 0 0 3.5 0z' />
-          <path d='M39.929 24.942a1.75 1.75 0 0 0-1.122-3.315 38.106 38.106 0 0 0-25.9 36.122 1.75 1.75 0 0 0 3.5 0 34.61 34.61 0 0 1 23.522-32.807z' />
+        className='relative p-2 text-gray-400 hover:text-white transition-colors'>
+        <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={2}
+            d='M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L18 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z'
+          />
         </svg>
-
-        {/* Alarm count badge */}
         {unreadCount > 0 && (
-          <span className='absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold'>
-            {unreadCount > 9 ? "9+" : unreadCount}
+          <span className='absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center'>
+            {unreadCount}
           </span>
         )}
       </button>
 
-      {/* Alarm dropdown */}
+      {/* Dropdown */}
       {showDropdown && (
-        <div className='absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50'>
+        <div className='absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto'>
           <div className='p-4 border-b border-slate-700'>
-            <div className='flex items-center justify-between'>
-              <h3 className='text-lg font-bold text-white'>Alarms</h3>
-              <button
-                onClick={() => setShowDropdown(false)}
-                className='text-gray-400 hover:text-white'>
-                <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              </button>
-            </div>
-            <p className='text-sm text-gray-400 mt-1'>{unreadCount} unread alarms</p>
+            <h3 className='text-lg font-semibold text-white'>Recent Alerts</h3>
+            <p className='text-sm text-gray-400'>{unreadCount} unread alerts</p>
           </div>
 
-          <div className='max-h-96 overflow-y-auto'>
-            {alarms.length > 0 ? (
-              <div className='p-4 space-y-3'>
-                {alarms.map((alarm) => (
-                  <div
-                    key={alarm.id}
-                    className={`p-3 rounded-lg border transition-all hover:scale-[1.02] ${
-                      alarm.resolved
-                        ? "opacity-60 border-slate-600 bg-slate-700/50"
-                        : severityColors[alarm.severity]
-                    }`}>
-                    <div className='flex items-start justify-between'>
-                      <div className='flex-1 min-w-0'>
-                        <div className='mb-2'>
-                          <span className='text-sm font-medium text-white'>{alarm.type}</span>
-                        </div>
-                        <div className='flex items-center justify-between'>
-                          <p className='text-xs text-gray-400 truncate'>
-                            {alarm.camera} • {alarm.location}
-                          </p>
-                          <div className='text-right text-xs text-gray-400 flex-shrink-0'>
-                            {new Date(alarm.timestamp).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {!alarm.resolved && (
-                      <div className='mt-3 flex items-center justify-between'>
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            severityColors[alarm.severity]
-                          }`}>
-                          {severityLabels[alarm.severity]}
-                        </span>
-                        <button
-                          onClick={() => handleCheck(alarm.id)}
-                          className='text-xs px-3 py-1 bg-farm-green text-white rounded hover:bg-green-600 transition-colors flex items-center space-x-1'>
-                          <svg
-                            className='w-3 h-3'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'>
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth={2}
-                              d='M5 13l4 4L19 7'
-                            />
-                          </svg>
-                          <span>Check</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className='p-8 text-center'>
+          <div className='max-h-64 overflow-y-auto'>
+            {alarms.length === 0 ? (
+              <div className='p-4 text-center text-gray-400'>
                 <svg
-                  className='w-12 h-12 text-gray-500 mx-auto mb-4'
+                  className='w-12 h-12 mx-auto mb-2 opacity-50'
                   fill='none'
                   stroke='currentColor'
                   viewBox='0 0 24 24'>
@@ -162,25 +92,64 @@ const AlarmIcon = () => {
                     d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
                   />
                 </svg>
-                <p className='text-gray-400'>No alarms</p>
+                <p>No alerts</p>
               </div>
+            ) : (
+              alarms.slice(0, 10).map((alarm) => (
+                <div
+                  key={alarm.id}
+                  className='p-4 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors'>
+                  <div className='flex items-start justify-between'>
+                    <div className='flex-1'>
+                      <div className='flex items-center space-x-2 mb-1'>
+                        <span className='text-sm font-medium text-white'>{alarm.type}</span>
+                        {alarm.isRealtime && (
+                          <span className='px-2 py-0.5 bg-green-500 text-white text-xs rounded-full'>
+                            LIVE
+                          </span>
+                        )}
+                        <span
+                          className={`px-2 py-0.5 text-xs rounded-full ${
+                            alarm.severity === "high"
+                              ? "bg-red-500/20 text-red-400"
+                              : alarm.severity === "medium"
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : "bg-blue-500/20 text-blue-400"
+                          }`}>
+                          {alarm.severity}
+                        </span>
+                      </div>
+                      <p className='text-xs text-gray-400 mb-1'>
+                        {alarm.camera} • {alarm.location}
+                      </p>
+                      <p className='text-xs text-gray-500'>
+                        {new Date(alarm.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleCheck(alarm.id)}
+                      className='ml-2 px-2 py-1 bg-slate-600 text-white text-xs rounded hover:bg-slate-500 transition-colors'>
+                      Check
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
 
-          <div className='p-4 border-t border-slate-700'>
-            <button
-              onClick={() => {
-                setShowDropdown(false);
-                navigate("/logs");
-              }}
-              className='w-full text-center text-sm text-farm-green hover:text-green-400 transition-colors'>
-              View All Alarms
-            </button>
-          </div>
+          {alarms.length > 10 && (
+            <div className='p-3 border-t border-slate-700'>
+              <button
+                onClick={() => navigate("/logs")}
+                className='w-full text-center text-sm text-farm-green hover:text-farm-green-light transition-colors'>
+                View all alerts
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Close dropdown when clicking outside */}
+      {/* Backdrop */}
       {showDropdown && (
         <div className='fixed inset-0 z-40' onClick={() => setShowDropdown(false)} />
       )}

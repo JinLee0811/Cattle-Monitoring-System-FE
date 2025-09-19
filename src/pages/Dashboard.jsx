@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useLogs } from "../services/logService";
 import VideoPlayer from "../components/VideoPlayer";
 import LogPanel from "../components/LogPanel";
+import NotificationSystem from "../components/NotificationSystem";
 import { mockCameras } from "../utils/mockData";
-import { detectingLogsMock } from "../utils/detectingLogsMock";
 
 const USE_WEATHER_MOCK = false;
 
@@ -42,19 +43,24 @@ const Dashboard = () => {
   const [weatherError, setWeatherError] = useState(null);
   const [showRiskView, setShowRiskView] = useState(false);
   const [riskIndex, setRiskIndex] = useState(0);
+  const [lastWeatherFetch, setLastWeatherFetch] = useState(null);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Detecting Logs KPI counts (shared with Logs.jsx mock)
+  // React Query를 사용한 로그 상태 관리
+  const { data: logsData } = useLogs();
+
+  // Detecting Logs KPI counts
   const kpiCounts = useMemo(() => {
+    const allLogs = logsData?.logs || [];
     return {
-      behavior: detectingLogsMock.filter((l) => l.category === "behavior").length,
-      weather: detectingLogsMock.filter((l) => l.category === "weather").length,
-      sound: detectingLogsMock.filter((l) => l.category === "sound").length,
-      camera: detectingLogsMock.filter((l) => l.category === "camera").length,
+      behavior: allLogs.filter((l) => l.category === "behavior").length,
+      weather: allLogs.filter((l) => l.category === "weather").length,
+      sound: allLogs.filter((l) => l.category === "sound").length,
+      camera: allLogs.filter((l) => l.category === "camera").length,
     };
-  }, []);
+  }, [logsData]);
 
   // Update current time
   useEffect(() => {
@@ -85,17 +91,33 @@ const Dashboard = () => {
       return;
     }
 
-    const defaultCoords = { lat: -33.8688, lon: 151.2093 };
+    // 캐시된 데이터가 있고 10분 이내라면 재사용
+    const now = Date.now();
+    const WEATHER_CACHE_DURATION = 10 * 60 * 1000; // 10분
+
+    if (lastWeatherFetch && now - lastWeatherFetch < WEATHER_CACHE_DURATION) {
+      console.log("Using cached weather data");
+      setLoadingWeather(false);
+      return;
+    }
+
+    const defaultCoords = { lat: -33.8688, lon: 151.19950864428853 };
 
     const fetchWeather = async (lat, lon) => {
       try {
+        console.log("Weather API call:", { lat: lat.toString(), lon: lon.toString() });
         setLoadingWeather(true);
         setWeatherError(null);
+
         const res = await fetch(`/api/weather/current?lat=${lat}&lon=${lon}`);
         if (!res.ok) throw new Error(`Weather request failed: ${res.status}`);
         const data = await res.json();
+
         setWeather(data);
+        setLastWeatherFetch(now); // 캐시 시간 업데이트
+        console.log("Weather data fetched successfully");
       } catch (err) {
+        console.error("Weather fetch error:", err);
         setWeather(null);
         setWeatherError(err?.message || "Failed to fetch weather");
       } finally {
@@ -109,13 +131,21 @@ const Dashboard = () => {
           const { latitude, longitude } = pos.coords;
           fetchWeather(latitude, longitude);
         },
-        () => fetchWeather(defaultCoords.lat, defaultCoords.lon),
-        { maximumAge: 10 * 60 * 1000, timeout: 5000 }
+        () => {
+          console.log("Geolocation failed, using default coordinates");
+          fetchWeather(defaultCoords.lat, defaultCoords.lon);
+        },
+        {
+          maximumAge: 10 * 60 * 1000, // 10분간 캐시
+          timeout: 5000,
+          enableHighAccuracy: false, // 정확도 낮춰서 빠른 응답
+        }
       );
     } else {
+      console.log("Geolocation not supported, using default coordinates");
       fetchWeather(defaultCoords.lat, defaultCoords.lon);
     }
-  }, []);
+  }, [lastWeatherFetch]); // lastWeatherFetch 의존성 추가
 
   const formatTime = (date) => {
     return date.toLocaleTimeString("en-AU", {
@@ -251,23 +281,14 @@ const Dashboard = () => {
                         const camera = mockCameras.find((c) => c.id === selectedCamera);
                         const isOnline = camera?.status === "online";
                         return isOnline ? (
-                          <video
-                            key={`video-${selectedCamera}`}
-                            className='w-full h-full object-cover'
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            onError={(e) => console.error("Video error:", e)}
-                            onLoadStart={() =>
-                              console.log("Video loading started for:", camera?.videoFile)
-                            }
-                            onCanPlay={() => console.log("Video can play for:", camera?.videoFile)}>
-                            <source src={`./video/${camera?.videoFile}`} type='video/quicktime' />
-                            <source src={`./video/${camera?.videoFile}`} type='video/mp4' />
-                            <source src={`./video/${camera?.videoFile}`} type='video/webm' />
-                            Your browser does not support the video tag.
-                          </video>
+                          <VideoPlayer
+                            videoUrl={`/video/${camera?.videoFile}`}
+                            cameraName={camera?.name}
+                            location={camera?.location}
+                            isLive={true}
+                            showControls={false}
+                            videoId={`camera_${selectedCamera}`}
+                          />
                         ) : (
                           <div className='w-full h-full flex items-center justify-center'>
                             <div className='text-center'>
@@ -412,25 +433,77 @@ const Dashboard = () => {
               <div className='bg-slate-800 rounded-lg p-6 relative overflow-hidden h-74 flex flex-col'>
                 <div className='flex items-center justify-between mb-4'>
                   <h3 className='text-lg font-bold text-white'>Weather</h3>
-                  <button
-                    type='button'
-                    onClick={() => setShowRiskView((v) => !v)}
-                    className={`inline-flex items-center gap-2 text-xs px-3 py-1 rounded-md border focus:outline-none transition-colors ${
-                      showRiskView
-                        ? "border-slate-400/40 text-slate-300 hover:bg-slate-400/10"
-                        : "border-red-400/50 text-red-300 hover:bg-red-400/10 shadow-[0_0_0_1px_rgba(248,113,113,0.15)]"
-                    }`}>
-                    <svg viewBox='0 0 24 24' fill='none' className='w-4 h-4'>
-                      <path
-                        d='M12 8v4l3 3'
+                  <div className='flex items-center gap-2'>
+                    {/* 새로고침 버튼 */}
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setLastWeatherFetch(null); // 캐시 무효화
+                        setLoadingWeather(true);
+                        // 강제로 날씨 데이터 다시 가져오기
+                        const defaultCoords = { lat: -33.8688, lon: 151.19950864428853 };
+                        const fetchWeather = async (lat, lon) => {
+                          try {
+                            console.log("Manual weather refresh:", {
+                              lat: lat.toString(),
+                              lon: lon.toString(),
+                            });
+                            setLoadingWeather(true);
+                            setWeatherError(null);
+
+                            const res = await fetch(`/api/weather/current?lat=${lat}&lon=${lon}`);
+                            if (!res.ok) throw new Error(`Weather request failed: ${res.status}`);
+                            const data = await res.json();
+
+                            setWeather(data);
+                            setLastWeatherFetch(Date.now());
+                            console.log("Weather data refreshed successfully");
+                          } catch (err) {
+                            console.error("Weather refresh error:", err);
+                            setWeather(null);
+                            setWeatherError(err?.message || "Failed to fetch weather");
+                          } finally {
+                            setLoadingWeather(false);
+                          }
+                        };
+                        fetchWeather(defaultCoords.lat, defaultCoords.lon);
+                      }}
+                      disabled={loadingWeather}
+                      className='inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-slate-600/40 bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                      title='Refresh weather data'>
+                      <svg
+                        className={`w-3 h-3 ${loadingWeather ? "animate-spin" : ""}`}
+                        fill='none'
                         stroke='currentColor'
-                        strokeWidth='2'
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                      />
-                    </svg>
-                    {showRiskView ? "Back to current" : "Upcoming risks"}
-                  </button>
+                        viewBox='0 0 24 24'>
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setShowRiskView((v) => !v)}
+                      className={`inline-flex items-center gap-2 text-xs px-3 py-1 rounded-md border focus:outline-none transition-colors ${
+                        showRiskView
+                          ? "border-slate-400/40 text-slate-300 hover:bg-slate-400/10"
+                          : "border-red-400/50 text-red-300 hover:bg-red-400/10 shadow-[0_0_0_1px_rgba(248,113,113,0.15)]"
+                      }`}>
+                      <svg viewBox='0 0 24 24' fill='none' className='w-4 h-4'>
+                        <path
+                          d='M12 8v4l3 3'
+                          stroke='currentColor'
+                          strokeWidth='2'
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                        />
+                      </svg>
+                      {showRiskView ? "Back to current" : "Upcoming risks"}
+                    </button>
+                  </div>
                 </div>
                 {loadingWeather ? (
                   <div className='space-y-3 flex-1 flex flex-col justify-center items-center'>
@@ -757,6 +830,9 @@ const Dashboard = () => {
           </div>
         </main>
       </div>
+
+      {/* 실시간 알림 시스템 */}
+      <NotificationSystem />
     </div>
   );
 };

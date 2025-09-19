@@ -1,18 +1,37 @@
 import { useMemo, useState } from "react";
-import { detectingLogsMock } from "../utils/detectingLogsMock";
+import { useLogs, useDeleteLog, useClearAllLogs } from "../services/logService";
 
 const Logs = () => {
   const [category, setCategory] = useState("all"); // all | behavior | weather | sound | camera
   const [severityDir, setSeverityDir] = useState("desc"); // 'desc' | 'asc'
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Hardcoded mock data for detecting logs
-  const detectingLogs = useMemo(() => detectingLogsMock, []);
+  // React Query hooks 사용
+  const { data: logsData, isLoading, error } = useLogs({ category });
+  const deleteLogMutation = useDeleteLog();
+  const clearAllLogsMutation = useClearAllLogs();
+
+  const detectingLogs = useMemo(() => logsData?.logs || [], [logsData?.logs]);
+
+  // 로그 삭제 함수
+  const handleDeleteLog = (logId) => {
+    deleteLogMutation.mutate(logId);
+  };
+
+  // 전체 삭제 함수
+  const handleClearAllLogs = () => {
+    if (window.confirm("모든 로그를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+      clearAllLogsMutation.mutate();
+    }
+  };
 
   const severityColors = {
     high: "text-red-400 bg-red-400/10 border-red-400/20",
     medium: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
     low: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+    warning: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
+    info: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+    error: "text-red-400 bg-red-400/10 border-red-400/20",
   };
 
   const categoryLabel = {
@@ -34,30 +53,43 @@ const Logs = () => {
   });
 
   // Sort by severity order 위험 > 주의 > 보통, then time desc
-  const severityOrder = { high: 3, medium: 2, low: 1 };
+  const severityOrder = { high: 3, medium: 2, low: 1, warning: 2, error: 3, info: 1 };
   const filteredLogs = [...filteredLogsRaw].sort((a, b) => {
     const dir = severityDir === "desc" ? 1 : -1;
     const sDiff = dir * ((severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0));
     if (sDiff !== 0) return sDiff;
-    return new Date(b.ts) - new Date(a.ts);
+    return new Date(b.ts || b.createdAt) - new Date(a.ts || a.createdAt);
   });
 
   const categoryCounts = useMemo(() => {
-    const s = searchTerm.toLowerCase();
-    const base = detectingLogs.filter(
-      (log) =>
-        log.title.toLowerCase().includes(s) ||
-        log.message.toLowerCase().includes(s) ||
-        log.camera.toLowerCase().includes(s) ||
-        log.location.toLowerCase().includes(s)
-    );
     return {
-      behavior: base.filter((l) => l.category === "behavior").length,
-      weather: base.filter((l) => l.category === "weather").length,
-      sound: base.filter((l) => l.category === "sound").length,
-      camera: base.filter((l) => l.category === "camera").length,
+      behavior: detectingLogs.filter((l) => l.category === "behavior").length,
+      weather: detectingLogs.filter((l) => l.category === "weather").length,
+      sound: detectingLogs.filter((l) => l.category === "sound").length,
+      camera: detectingLogs.filter((l) => l.category === "camera").length,
     };
-  }, [detectingLogs, searchTerm]);
+  }, [detectingLogs]);
+
+  if (isLoading) {
+    return (
+      <div className='min-h-screen bg-slate-900 flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='w-8 h-8 border-2 border-farm-green border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
+          <p className='text-gray-400'>Loading logs...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='min-h-screen bg-slate-900 flex items-center justify-center'>
+        <div className='text-center'>
+          <p className='text-red-400'>Error loading logs: {error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen bg-slate-900'>
@@ -70,6 +102,19 @@ const Logs = () => {
               Recent behavior, weather, sound and camera events
             </p>
           </div>
+          <button
+            onClick={handleClearAllLogs}
+            className='px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2'>
+            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+              />
+            </svg>
+            <span>Clear All Logs</span>
+          </button>
         </div>
       </header>
 
@@ -167,7 +212,7 @@ const Logs = () => {
                             <span className='text-xs opacity-75'>{log.location}</span>
                           </div>
                           <div className='text-xs text-gray-400'>
-                            ID: {log.id} • {new Date(log.ts).toLocaleString()}
+                            ID: {log.id} • {new Date(log.ts || log.createdAt).toLocaleString()}
                           </div>
                         </div>
                         <div>
@@ -189,6 +234,14 @@ const Logs = () => {
                           </div>
                         </div>
                       </div>
+                    </div>
+                    <div className='flex items-center space-x-2'>
+                      <button
+                        onClick={() => handleDeleteLog(log.id)}
+                        className='px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors'
+                        title='Delete log'>
+                        🗑️ Delete
+                      </button>
                     </div>
                   </div>
                 </div>

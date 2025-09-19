@@ -1,4 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { queryClient } from "./lib/queryClient";
 import { useAuth } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
 import Sidebar from "./components/Sidebar";
@@ -47,64 +50,67 @@ function App() {
   useTheme();
 
   return (
-    <Router>
-      <div className='App'>
-        <Routes>
-          <Route path='/login' element={<Login />} />
-          <Route
-            path='/'
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/monitor'
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Monitor />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/logs'
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Logs />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/upload'
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Upload />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/settings'
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Settings />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route path='*' element={<Navigate to='/' replace />} />
-        </Routes>
-      </div>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div className='App'>
+          <Routes>
+            <Route path='/login' element={<Login />} />
+            <Route
+              path='/'
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/monitor'
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Monitor />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/logs'
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Logs />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/upload'
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Upload />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/settings'
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Settings />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route path='*' element={<Navigate to='/' replace />} />
+          </Routes>
+        </div>
+      </Router>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }
 
