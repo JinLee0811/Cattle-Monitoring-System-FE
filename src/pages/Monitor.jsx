@@ -202,8 +202,8 @@ const Monitor = () => {
 
         {/* Real-time log panel - only show when camera is expanded */}
         {expandedCamera && (
-          <aside className='w-80 p-6'>
-            <LogPanel selectedCamera={expandedCamera} />
+          <aside className='w-80 p-4 sticky top-0 h-[calc(100vh-4rem)] overflow-y-auto'>
+            <LogPanel selectedCamera={expandedCamera} compact />
           </aside>
         )}
       </div>

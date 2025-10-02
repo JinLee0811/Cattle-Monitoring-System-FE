@@ -20,7 +20,7 @@ const Logs = () => {
 
   // 전체 삭제 함수
   const handleClearAllLogs = () => {
-    if (window.confirm("모든 로그를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+    if (window.confirm("Do you want to delete all logs? This action cannot be undone.")) {
       clearAllLogsMutation.mutate();
     }
   };
@@ -238,9 +238,23 @@ const Logs = () => {
                     <div className='flex items-center space-x-2'>
                       <button
                         onClick={() => handleDeleteLog(log.id)}
-                        className='px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors'
+                        className='px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors flex items-center space-x-2'
                         title='Delete log'>
-                        🗑️ Delete
+                        <svg
+                          className='w-4 h-4'
+                          viewBox='0 0 24 24'
+                          fill='none'
+                          stroke='currentColor'
+                          strokeWidth='2'
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          aria-hidden='true'>
+                          <polyline points='3 6 5 6 21 6' />
+                          <path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6' />
+                          <path d='M10 11v6M14 11v6' />
+                          <path d='M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2' />
+                        </svg>
+                        <span>Delete</span>
                       </button>
                     </div>
                   </div>
