@@ -69,7 +69,7 @@ export const mockCameras = [
     resolution: "1080p",
     fps: 30,
     recording: true,
-    videoFile: "cam2.mov",
+    videoFile: "cam2.mp4",
   },
   {
     id: 3,
@@ -80,14 +80,25 @@ export const mockCameras = [
     resolution: "720p",
     fps: 25,
     recording: true,
-    videoFile: "cam3.mov",
+    videoFile: "cam3.mp4",
   },
   {
     id: 4,
     name: "Camera 4",
+    status: "online",
+    location: "Barn D",
+    lastUpdate: "2024-01-15 14:30:15",
+    resolution: "1080p",
+    fps: 30,
+    recording: true,
+    videoFile: "cam4.mp4",
+  },
+  {
+    id: 5,
+    name: "Camera 5",
     status: "offline",
-    location: "External Surveillance",
-    lastUpdate: "2024-01-15 13:45:20",
+    location: "Reserved",
+    lastUpdate: "Unknown",
     resolution: "1080p",
     fps: 30,
     recording: false,
@@ -128,8 +139,8 @@ export const mockAlarms = [
 
 // System status data
 export const mockSystemStatus = {
-  totalCameras: 4,
-  onlineCameras: 3,
+  totalCameras: 5,
+  onlineCameras: 4,
   offlineCameras: 1,
   totalStorage: "2.5TB",
   usedStorage: "1.8TB",

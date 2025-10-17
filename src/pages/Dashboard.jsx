@@ -774,24 +774,13 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                {/* Visual effects overlay */}
-                {!showRiskView && weather?.current?.description?.toLowerCase().includes("rain") && (
-                  <div className='pointer-events-none absolute inset-0 overflow-hidden'>
-                    {[...Array(20)].map((_, i) => (
-                      <span
-                        key={i}
-                        className='absolute w-1 h-3 bg-blue-300/30 animate-ping'
-                        style={{ left: `${(i * 5) % 100}%`, top: `${(i * 7) % 100}%` }}></span>
-                    ))}
+                {/* Removed rain overlay effect by request */}
+
+                {showRiskView && weather?.current?.description?.toLowerCase().includes("clear") && (
+                  <div className='pointer-events-none absolute -right-3 -top-3'>
+                    <div className='w-16 h-16 rounded-full bg-yellow-300/60 blur-sm animate-pulse'></div>
                   </div>
                 )}
-
-                {!showRiskView &&
-                  weather?.current?.description?.toLowerCase().includes("clear") && (
-                    <div className='pointer-events-none absolute -right-3 -top-3'>
-                      <div className='w-16 h-16 rounded-full bg-yellow-300/60 blur-sm animate-pulse'></div>
-                    </div>
-                  )}
               </div>
 
               {/* Camera status */}
